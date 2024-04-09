@@ -1328,6 +1328,8 @@ public class ServiceStateTracker extends Handler {
                 mPrevSubId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
                 mIsSimReady = true;
                 pollStateInternal(false);
+                // Signal strength polling stops when radio is off
+                queueNextSignalStrengthPoll();
                 break;
 
             case EVENT_RADIO_STATE_CHANGED:
@@ -1335,6 +1337,9 @@ public class ServiceStateTracker extends Handler {
                 if(!mPhone.isPhoneTypeGsm() &&
                         mCi.getRadioState() == TelephonyManager.RADIO_POWER_ON) {
                     handleCdmaSubscriptionSource(mCdmaSSM.getCdmaSubscriptionSource());
+
+                    // Signal strength polling stops when radio is off.
+                    queueNextSignalStrengthPoll();
                 }
                 // This will do nothing in the 'radio not available' case
                 setPowerStateToDesired();
@@ -4719,6 +4724,10 @@ public class ServiceStateTracker extends Handler {
             return mUiccController.getUiccCardApplication(mPhone.getPhoneId(),
                     UiccController.APP_FAM_3GPP2);
         }
+    }
+
+    private void queueNextSignalStrengthPoll() {
+        mPhone.getSignalStrengthController().queueNextSignalStrengthPoll();
     }
 
     private void notifyCdmaSubscriptionInfoReady() {
